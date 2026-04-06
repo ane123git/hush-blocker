@@ -1,0 +1,3 @@
+<resources>
+    <style name="Theme.MaterialComponents.Light.NoActionBar" parent="Theme.MaterialComponents.Light.NoActionBar"/>
+</resources>
