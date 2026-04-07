@@ -1,3 +1,6 @@
-<string name="accessibility_description">
-    Used to detect and log notifications from blocked apps.
-</string>
+<resources>
+    <string name="app_name">Hush Blocker</string>
+    <string name="accessibility_description">
+        Used to detect and log notifications from blocked apps.
+    </string>
+</resources>
