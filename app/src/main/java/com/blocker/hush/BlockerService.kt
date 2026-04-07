@@ -1,34 +1,44 @@
 package com.blocker.hush
 
-import android.service.notification.NotificationListenerService
-import android.service.notification.StatusBarNotification
+import android.accessibilityservice.AccessibilityService
+import android.app.Notification
+import android.view.accessibility.AccessibilityEvent
 import android.content.Context
 import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
 
-class BlockerService : NotificationListenerService() {
+class BlockerService : AccessibilityService() {
 
     companion object {
-        val sessionLogs = mutableListOf<String>() // Temporary in-memory logs
+        val sessionLogs = mutableListOf<String>()
     }
 
-    override fun onNotificationPosted(sbn: StatusBarNotification) {
-        val packageName = sbn.packageName
-        
-        // 1. Skip if it's a system app
-        if (isSystemApp(packageName)) return
-
-        val sharedPrefs = getSharedPreferences("BlockList", Context.MODE_PRIVATE)
-        val blockedApps = sharedPrefs.getStringSet("blocked_packages", emptySet())
-
-        if (blockedApps?.contains(packageName) == true) {
-            cancelNotification(sbn.key) // Remove from status bar
+    override fun onAccessibilityEvent(event: AccessibilityEvent) {
+        if (event.eventType == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
+            val packageName = event.packageName?.toString() ?: return
             
-            val title = sbn.notification.extras.getString("android.title") ?: "No Title"
-            val text = sbn.notification.extras.getString("android.text") ?: ""
-            sessionLogs.add(0, "[$packageName] $title: $text") // Add to top
+            // Skip system apps
+            if (isSystemApp(packageName)) return
+
+            val sharedPrefs = getSharedPreferences("BlockList", Context.MODE_PRIVATE)
+            val blockedApps = sharedPrefs.getStringSet("blocked_packages", emptySet())
+
+            if (blockedApps?.contains(packageName) == true) {
+                // Extract notification data
+                val notification = event.parcelableData as? Notification
+                val extras = notification?.extras
+                val title = extras?.getCharSequence(Notification.EXTRA_TITLE)?.toString() ?: "No Title"
+                val text = extras?.getCharSequence(Notification.EXTRA_TEXT)?.toString() ?: ""
+
+                sessionLogs.add(0, "[$packageName] $title: $text")
+                
+                // Note: AccessibilityService cannot programmatically "delete" a notification 
+                // from the tray like NotificationListenerService can. 
+                // It functions here as a stealth logger for restricted devices.
+            }
         }
     }
+
+    override fun onInterrupt() {}
 
     private fun isSystemApp(packageName: String): Boolean {
         return try {
