@@ -1,0 +1,16 @@
+workflows:
+  android-build:
+    name: Android Debug APK
+    max_build_duration: 30
+
+    environment:
+      vars:
+        PACKAGE_NAME: "com.blocker.hush"
+
+    scripts:
+      - name: Build APK
+        script: |
+          gradle assembleDebug
+
+    artifacts:
+      - app/build/outputs/apk/debug/*.apk
