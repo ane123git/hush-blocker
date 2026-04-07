@@ -7,12 +7,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <service android:name=".BlockerService"
-            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.service.notification.NotificationListenerService" />
-            </intent-filter>
-        </service>
+        <service
+    android:name=".BlockerService"
+    android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+    android:exported="true">
+    <intent-filter>
+        <action android:name="android.view.accessibility.AccessibilityService" />
+    </intent-filter>
+    <meta-data
+        android:name="android.view.accessibility.accessibilityservice"
+        android:resource="@xml/accessibility_service_config" />
+</service>
     </application>
 </manifest>
