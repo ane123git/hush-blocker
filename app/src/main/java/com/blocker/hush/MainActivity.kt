@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.provider.Settings
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 
@@ -23,7 +24,6 @@ class MainActivity : AppCompatActivity() {
         val sharedPrefs = getSharedPreferences("BlockList", Context.MODE_PRIVATE)
         val blockedApps = sharedPrefs.getStringSet("blocked_packages", mutableSetOf())?.toMutableSet() ?: mutableSetOf()
 
-        // Filter: Only User Apps (exclude FLAG_SYSTEM)
         val apps = packageManager.getInstalledApplications(PackageManager.GET_META_DATA)
             .filter { (it.flags and ApplicationInfo.FLAG_SYSTEM) == 0 }
             .sortedBy { it.loadLabel(packageManager).toString() }
@@ -50,23 +50,25 @@ class MainActivity : AppCompatActivity() {
         layout.addView(listView)
         setContentView(layout)
 
-        if (!isNotificationServiceEnabled()) {
-            startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"))
+        if (!isAccessibilityServiceEnabled()) {
+            Toast.makeText(this, "Please enable Hush Blocker in Accessibility", Toast.LENGTH_LONG).show()
+            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
 
         btnLogs.setOnClickListener {
             val logString = if (BlockerService.sessionLogs.isEmpty()) "No logs yet." 
                            else BlockerService.sessionLogs.joinToString("\n\n")
             android.app.AlertDialog.Builder(this)
-                .setTitle("Session Block History")
+                .setTitle("Session History")
                 .setMessage(logString)
                 .setPositiveButton("OK", null)
                 .show()
         }
     }
 
-    private fun isNotificationServiceEnabled(): Boolean {
-        val names = android.provider.Settings.Secure.getString(contentResolver, "enabled_notification_listeners")
-        return names?.contains(packageName) == true
+    private fun isAccessibilityServiceEnabled(): Boolean {
+        val expectedId = "$packageName/.BlockerService"
+        val enabledServices = Settings.Secure.getString(contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
+        return enabledServices?.contains(expectedId) == true
     }
 }
